@@ -1,0 +1,120 @@
+import math
+from tkinter import *
+# ---------------------------- CONSTANTS ------------------------------- #
+PINK = "#e2979c"
+RED = "#e7305b"
+GREEN = "#9bdeac" # from color hunt website
+YELLOW = "#f7f5dd"
+FONT_NAME = "Courier"
+WORK_MIN = 25
+SHORT_BREAK_MIN = 5
+LONG_BREAK_MIN = 20
+reps = 0
+timer = None
+# ---------------------------- TIMER RESET ------------------------------- #
+def focus_window(option):
+    if option == "on":
+        window.deiconify()
+        window.focus_force()
+        window.attributes('-topmost', 1)
+    elif option == "off":
+        window.attributes('-topmost', 0)
+
+# ---------------------------- TIMER RESET ------------------------------- # 
+def reset():
+    global timer, reps
+    window.after_cancel(timer)
+    timer_label.config(text= "Timer", fg= GREEN)
+    canvas.itemconfig(countdown, text = "00:00")
+    mark.config(text = "")
+    reps = 0
+    start_button.config(state="normal")
+
+
+
+
+# ---------------------------- TIMER MECHANISM ------------------------------- # 
+def start_timer():
+    global reps
+    reps += 1
+    work_sec = WORK_MIN * 60
+    short_break_sec = SHORT_BREAK_MIN * 60
+    long_break_sec = LONG_BREAK_MIN * 60
+    if reps == 1 or reps == 3 or reps == 5 or reps == 7:
+        count_down(work_sec)
+        timer_label.config(text= "Work", fg=GREEN)
+        focus_window("off")
+
+    elif reps == 8:
+        count_down(long_break_sec)
+        timer_label.config(text="long break", fg=RED)
+        focus_window("on")
+
+    elif reps == 2 or reps == 4 or reps == 6:
+        count_down(short_break_sec)
+        timer_label.config(text="break", fg=PINK)
+        focus_window("on")
+
+
+# ---------------------------- COUNTDOWN MECHANISM ------------------------------- #
+def count_down(count):
+    global timer
+    # math floor will remove the numbers after the decimal
+    count_min = math.floor(count/60)
+    # % will return the remainder which will be the seconds
+    count_sec = count % 60
+    if count_sec < 10:
+        # without this, when the timer start it will not show 25:"00".
+        count_sec = f"0{count_sec}"
+
+
+    canvas.itemconfig(countdown, text = f"{count_min}:{count_sec}")
+    if count > 0:
+        # after method takes the time it should wait in millie second, then it takes the function, and then you can
+        # specify the parameter
+        timer = window.after(1000, count_down, count - 1)
+        start_button.config(state="disabled")
+    else:
+        start_timer()
+        marks = ""
+        # if we do 4 reps then that means we have done 2 working sessions and 2 breaks
+        work_sessions = math.floor(reps/2)
+        for _ in range(work_sessions):
+            marks += check_mark
+            mark.config(text = marks)
+# ---------------------------- UI SETUP ------------------------------- #
+
+window = Tk()
+window.title("Pomodoro")
+window.config(padx= 100, pady= 50, bg= YELLOW)
+# highlightthickness will remove the border for the tomato
+canvas = Canvas(width=200, height=224, bg= YELLOW, highlightthickness=0)
+# with the canvas module you can layer the images and texts over each other
+tomato_img = PhotoImage(file="tomato.png")
+# create_image function will not accept file path, so that's why we created a variable for tomato_img
+canvas.create_image(100, 112, image = tomato_img)
+countdown = canvas.create_text(100,130, text="00:00", fill="white", font=(FONT_NAME, 35, "bold"))
+canvas.grid(column=2, row=2)
+
+check_mark = "✔"
+# create a "start" button
+start_button = Button(text="Start", command=start_timer)
+start_button.grid(column=1, row=3)
+
+# create a "reset" button
+reset_button = Button(text="Reset", command= reset)
+reset_button.grid(column=3, row=3)
+
+# create a "timer" label as a title
+timer_label = Label(text="Timer", font=(FONT_NAME, 35, "bold"), fg=GREEN, bg=YELLOW)
+timer_label.grid(column=2, row=1)
+
+# Create a checkmark label
+
+mark = Label( fg= GREEN, bg= YELLOW)
+mark.grid(column=2, row=3)
+
+
+
+
+window.mainloop()
